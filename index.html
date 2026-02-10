@@ -27,7 +27,6 @@
       color: var(--text-main);
       line-height: 1.6;
     }
-    a { text-decoration: none; color: inherit; }
 
     .page {
       max-width: 1200px;
@@ -69,8 +68,6 @@
       cursor: pointer;
       font-size: 14px;
       transition: var(--transition);
-      position: relative;
-      overflow: hidden;
     }
     .btn-ghost {
       background: transparent;
@@ -391,6 +388,35 @@
       border-color: var(--border-focus);
       box-shadow: 0 0 0 3px rgb(16 185 129 / 0.1);
     }
+    .emoji-picker {
+      position: absolute;
+      bottom: 80px;
+      left: 24px;
+      background: white;
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+      display: none;
+      gap: 8px;
+      flex-wrap: wrap;
+      max-width: 280px;
+      z-index: 10;
+    }
+    .emoji-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: none;
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 20px;
+      transition: var(--transition);
+    }
+    .emoji-btn:hover {
+      background: var(--accent-light);
+      transform: scale(1.1);
+    }
     .file-input-wrapper {
       position: relative;
     }
@@ -442,6 +468,23 @@
     .send-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+    .emoji-toggle {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    .emoji-toggle:hover {
+      border-color: var(--accent);
+      background: var(--accent-light);
     }
 
     @media (max-width: 900px) {
@@ -558,8 +601,8 @@
   <main id="chat-section" class="hidden">
     <h2 class="section-title" style="margin-bottom: 12px;">Демо‑чат SENDER</h2>
     <p style="font-size:15px; color:var(--text-muted); margin-bottom:24px;">
-      Интерактивный прототип: отправляйте сообщения и файлы коллеге.
-      <strong>Демо‑бот "Алексей (разработчик)"</strong> отвечает автоматически.
+      Интерактивный прототип с <strong>умным ботом "Алексей"</strong> — отправляйте 
+      сообщения/файлы, используйте эмодзи (Ctrl+Enter).
     </p>
 
     <div class="chat-shell">
@@ -598,7 +641,21 @@
         </div>
 
         <div class="chat-input-area">
-          <textarea id="message-input" placeholder="Напишите сообщение Алексею… (Ctrl+Enter для отправки)"></textarea>
+          <div style="position: relative;">
+            <textarea id="message-input" placeholder="Напишите сообщение Алексею… (Ctrl+Enter)"></textarea>
+            <div class="emoji-picker" id="emoji-picker">
+              <button class="emoji-btn" onclick="insertEmoji('😊')">😊</button>
+              <button class="emoji-btn" onclick="insertEmoji('👍')">👍</button>
+              <button class="emoji-btn" onclick="insertEmoji('🔥')">🔥</button>
+              <button class="emoji-btn" onclick="insertEmoji('📊')">📊</button>
+              <button class="emoji-btn" onclick="insertEmoji('✅')">✅</button>
+              <button class="emoji-btn" onclick="insertEmoji('🙌')">🙌</button>
+              <button class="emoji-btn" onclick="insertEmoji('🚀')">🚀</button>
+              <button class="emoji-btn" onclick="insertEmoji('💡')">💡</button>
+            </div>
+            <div class="emoji-toggle" onclick="toggleEmojiPicker()" title="Эмодзи">😀</div>
+          </div>
+          
           <div class="file-input-wrapper">
             <label class="file-input-label">
               📎
@@ -626,10 +683,12 @@
   const selectedFileName = document.getElementById("selected-file-name");
   const currentUserLabel = document.getElementById("current-user-label");
   const sendBtn = document.getElementById("send-btn");
+  const emojiPicker = document.getElementById("emoji-picker");
 
   let currentUser = "Вы";
   let users = ["Алексей (разработчик)"];
   let botTyping = false;
+  let emojiPickerVisible = false;
 
   // Sound effect for message sending
   function playSendSound() {
@@ -681,10 +740,29 @@
     initUsers();
   }
 
+  function toggleEmojiPicker() {
+    emojiPickerVisible = !emojiPickerVisible;
+    emojiPicker.style.display = emojiPickerVisible ? 'flex' : 'none';
+  }
+
+  function insertEmoji(emoji) {
+    const start = messageInput.selectionStart;
+    const end = messageInput.selectionEnd;
+    const text = messageInput.value;
+    messageInput.value = text.substring(0, start) + emoji + text.substring(end);
+    messageInput.focus();
+    messageInput.setSelectionRange(start + emoji.length, start + emoji.length);
+    toggleEmojiPicker();
+  }
+
   function seedDemoMessages() {
     messagesEl.innerHTML = "";
-    addMessage("Алексей (разработчик)", "Привет! SENDER готов к тестированию. Пришли отчёт по задачам или любой документ — проверю работу с файлами.", false);
-    setTimeout(() => addMessage("Алексей (разработчик)", "Можно Word, PDF или Excel. Жду! 😊"), 1500);
+    setTimeout(() => {
+      addMessage("Алексей (разработчик)", "Привет! 👋 Как дела? SENDER готов к тестированию. Пришли отчёт или любой документ — проверю работу с файлами 😊", false);
+    }, 500);
+    setTimeout(() => {
+      addMessage("Алексей (разработчик)", "Можно Word, PDF или Excel. Что на повестке сегодня? 🚀", false);
+    }, 3000);
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
@@ -694,7 +772,7 @@
     const typingEl = document.createElement("div");
     typingEl.id = "typing";
     typingEl.className = "typing-indicator";
-    typingEl.innerHTML = `${author} печатает... <span style="display:inline-block; width:20px;">⠄⠆⠇⠿⠙⠋</span>`;
+    typingEl.innerHTML = `${author} печатает... <span style="display:inline-block; width:20px;animation: dots 1.5s infinite;">⠄⠆⠇⠿⠙⠋</span>`;
     messagesEl.appendChild(typingEl);
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
@@ -703,6 +781,41 @@
     botTyping = false;
     const typingEl = document.getElementById("typing");
     if (typingEl) typingEl.remove();
+  }
+
+  function getHumanLikeBotResponse(text, fileName = "") {
+    const lowerText = text.toLowerCase();
+    
+    // Key phrases detection
+    if (lowerText.includes('как дела') || lowerText.includes('как делишки') || lowerText.includes('привет')) {
+      return ['Отлично, спасибо! 😊 А у тебя как настроение?', 'Нормально, работаю 🚀 Как твои проекты?', 'Всё огонь! 🔥 А у тебя что нового?'];
+    }
+    if (lowerText.includes('отчёт') || lowerText.includes('доклад')) {
+      return ['📊 Получил отчёт, гляну сейчас. Спасибо!', 'Отлично, разберусь с цифрами ✅', 'Вижу данные, нужно обсудить пару моментов 💡'];
+    }
+    if (lowerText.includes('файл') || lowerText.includes('документ') || fileName) {
+      return ['📎 Файл получил! Загружаю в хранилище...', '✅ Документ сохранён. Могу внести правки?', 'Получил, проверю содержимое 😊'];
+    }
+    if (lowerText.includes('вопрос') || lowerText.includes('помоги')) {
+      return ['Конечно, расскажи подробнее 💬', 'В чём вопрос? Готов помочь! 🙌', 'Давай разберёмся вместе 🚀'];
+    }
+    if (lowerText.includes('спасибо') || lowerText.includes('мерси')) {
+      return ['Пожалуйста! 😊 Всегда рад помочь', 'Без проблем! ✅', 'Рад был помочь 🙌'];
+    }
+    
+    // Random human-like responses
+    const casualResponses = [
+      'Понял тебя 👍 Готов обсудить детали',
+      'Окей, принял к сведению 😊',
+      'Интересно! Расскажи подробнее 💡',
+      'Согласен, логично ✅',
+      'Классная мысль! 🚀',
+      'Записал, сделаю ✅ Какой дедлайн?',
+      'Хорошо, держу в голове 📝',
+      'Вижу, отличная идея! 🔥'
+    ];
+    
+    return casualResponses;
   }
 
   function addMessage(author, text, isMe = false, fileName = "") {
@@ -737,16 +850,10 @@
   function botResponse(text, fileName = "") {
     showTyping("Алексей (разработчик)");
     setTimeout(() => {
-      const responses = [
-        "Получил! Файл загружен успешно.",
-        "Отлично, документ сохранён в корпоративное хранилище.",
-        "Проверил отчёт — всё корректно. Могу внести правки.",
-        "Спасибо! Если есть вопросы по файлу — спрашивай.",
-        "📊 Анализ завершён. Готов обсудить результаты."
-      ];
+      const responses = getHumanLikeBotResponse(text, fileName);
       const response = responses[Math.floor(Math.random() * responses.length)];
       addMessage("Алексей (разработчик)", response, false, fileName);
-    }, 1000 + Math.random() * 2000);
+    }, 1500 + Math.random() * 2500);
   }
 
   function sendMessage() {
@@ -766,6 +873,7 @@
     fileInput.value = "";
     selectedFileName.textContent = "";
     sendBtn.disabled = true;
+    emojiPicker.style.display = 'none';
     setTimeout(() => sendBtn.disabled = false, 500);
   }
 
@@ -776,6 +884,10 @@
     }
   });
 
+  messageInput.addEventListener("input", () => {
+    sendBtn.disabled = !messageInput.value.trim() && !fileInput.files[0];
+  });
+
   fileInput.addEventListener("change", () => {
     if (fileInput.files[0]) {
       selectedFileName.innerHTML = `📎 ${fileInput.files[0].name}`;
@@ -784,8 +896,12 @@
     }
   });
 
-  messageInput.addEventListener("input", () => {
-    sendBtn.disabled = !messageInput.value.trim() && !fileInput.files[0];
+  // Hide emoji picker on click outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.emoji-picker') && !e.target.closest('.emoji-toggle')) {
+      emojiPicker.style.display = 'none';
+      emojiPickerVisible = false;
+    }
   });
 
   // Init
