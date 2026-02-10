@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>SENDER — внутренний мессенджер</title>
+  <style>
+    :root {
+      --bg: #f5f5f5;
+      --accent: #2b6cb0;
+      --accent-light: #ebf4ff;
+      --border: #d0d0d0;
+      --text-main: #222;
+      --text-muted: #666;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+    }
+    a { text-decoration: none; color: inherit; }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    .hidden { display: none; }
+
+    /* HEADER */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+    .logo {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+    .logo span {
+      color: var(--accent);
+    }
+    .header-actions button {
+      padding: 8px 16px;
+      border-radius: 4px;
+      border: 1px solid var(--accent);
+      background: white;
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .header-actions button.primary {
+      background: var(--accent);
+      color: white;
+      margin-left: 8px;
+    }
+
+    /* LANDING */
+    .hero {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 32px;
+      margin-bottom: 40px;
+    }
+    .hero-title {
+      font-size: 32px;
+      margin-bottom: 16px;
+    }
+    .hero-subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .hero-list {
+      list-style: disc;
+      padding-left: 20px;
+      margin-bottom: 24px;
+      color: var(--text-main);
+    }
+    .hero-cta button {
+      padding: 12px 24px;
+      border-radius: 4px;
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .hero-card {
+      border-radius: 8px;
+      padding: 20px;
+      background: white;
+      border: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .hero-card h3 {
+      font-size: 15px;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }
+
+    .section-title {
+      font-size: 18px;
+      margin: 24px 0 12px;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      font-size: 13px;
+    }
+    .feature {
+      background: white;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 14px;
+    }
+    .feature h4 {
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    /* AUTH */
+    .auth-wrapper {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      border-radius: 8px;
+      background: white;
+      border: 1px solid var(--border);
+    }
+    .auth-wrapper h2 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .auth-wrapper p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    label {
+      font-size: 13px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 9px 18px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-ghost {
+      background: white;
+      border: 1px solid var(--border);
+      color: var(--text-main);
+    }
+
+    /* CHAT */
+    .chat-shell {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 0;
+      height: 520px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: white;
+      margin-top: 16px;
+    }
+
+    .chat-sidebar {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sidebar-user {
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .user-list {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+    .user-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+    }
+    .user-item.active {
+      background: var(--accent-light);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .sidebar-footer {
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .add-btn {
+      border: none;
+      background: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .chat-main {
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-header {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-room-info {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 12px 16px;
+      overflow-y: auto;
+      background: #fbfbfb;
+      font-size: 13px;
+    }
+    .message {
+      max-width: 80%;
+      margin-bottom: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: white;
+      border: 1px solid #e0e0e0;
+    }
+    .message.me {
+      margin-left: auto;
+      background: var(--accent-light);
+      border-color: #c3dafe;
+    }
+    .message-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .message-text {
+      line-height: 1.4;
+    }
+    .message-file {
+      font-size: 12px;
+      margin-top: 4px;
+      color: var(--accent);
+    }
+
+    .chat-input-area {
+      border-top: 1px solid var(--border);
+      padding: 8px 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+      align-items: center;
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    textarea {
+      flex: 1;
+      resize: none;
+      height: 44px;
+      padding: 8px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .file-input-label {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px dashed var(--border);
+      cursor: pointer;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .file-name {
+      font-size: 11px;
+      color: var(--text-muted);
+      max-width: 140px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width: 800px) {
+      .hero { grid-template-columns: 1fr; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .chat-shell { height: 460px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="logo">SENDER<span>.</span></div>
+    <div class="header-actions">
+      <button class="btn-ghost" onclick="showSection('landing')">Возможности</button>
+      <button class="primary" onclick="showSection('auth')">Войти в SENDER</button>
+    </div>
+  </header>
+
+  <!-- LANDING / PITCH -->
+  <main id="landing-section">
+    <section class="hero">
+      <div>
+        <h1 class="hero-title">SENDER — защищённый мессенджер для команды</h1>
+        <p class="hero-subtitle">
+          MVP‑решение для внутренней коммуникации коллег: структурированные чаты,
+          обмен текстом и документами (Word, PDF, Excel) в рамках единого
+          защищённого пространства компании.
+        </p>
+
+        <ul class="hero-list">
+          <li>Личные и групповые чаты для рабочих обсуждений.</li>
+          <li>Передача файлов: договоры, отчёты, презентации.</li>
+          <li>Поиск по сообщениям и файлам внутри диалогов.</li>
+          <li>Простая авторизация по корпоративной учётной записи.</li>
+        </ul>
+
+        <div class="hero-cta">
+          <button onclick="showSection('auth')">Показать демо‑чат</button>
+        </div>
+      </div>
+
+      <aside class="hero-card">
+        <h3>Ключевые ценности для компании</h3>
+        <p><strong>Контроль данных.</strong> Вся переписка и документы хранятся
+          внутри периметра компании, без сторонних мессенджеров.</p>
+        <p><strong>Фокус на работе.</strong> Только рабочие чаты и каналы, без шума
+          и отвлекающих факторов.</p>
+        <p><strong>Простое масштабирование.</strong> Добавление новых отделов и
+          пользователей за минуты.</p>
+      </aside>
+    </section>
+
+    <section>
+      <h2 class="section-title">Функциональные модули MVP</h2>
+      <div class="feature-grid">
+        <div class="feature">
+          <h4>Единый чат‑центр</h4>
+          <p>Список активных диалогов, статусы коллег, быстрый переход
+            между личными и групповыми чатами.</p>
+        </div>
+        <div class="feature">
+          <h4>Обмен файлами</h4>
+          <p>Отправка и просмотр документов Word, PDF, Excel прямо в контексте
+            обсуждения задачи.</p>
+        </div>
+        <div class="feature">
+          <h4>Управление пользователями</h4>
+          <p>Добавление новых сотрудников, распределение по командам,
+            задание ролей: участник, руководитель, администратор.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- AUTH -->
+  <main id="auth-section" class="hidden">
+    <div class="auth-wrapper">
+      <h2>Вход в SENDER</h2>
+      <p>Используйте корпоративный логин. В MVP данные хранятся только локально
+        для демонстрации интерфейса.</p>
+
+      <div class="form-group">
+        <label for="login-name">Имя или корпоративный e‑mail</label>
+        <input id="login-name" type="text" placeholder="name@company.ru" />
+      </div>
+      <div class="form-group">
+        <label for="login-pass">Пароль</label>
+        <input id="login-pass" type="password" placeholder="••••••••" />
+      </div>
+
+      <div style="margin-top: 10px; display:flex; gap:8px;">
+        <button class="btn btn-primary" onclick="login()">Войти</button>
+        <button class="btn btn-ghost" onclick="showSection('landing')">
+          Назад к описанию
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- CHAT DEMO -->
+  <main id="chat-section" class="hidden">
+    <h2 class="section-title">Демо‑чат SENDER</h2>
+    <p style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">
+      Ниже — интерактивный прототип. Сообщения и файлы хранятся в памяти браузера
+      и демонстрируют сценарии: вход, добавление пользователей, обмен текстом
+      и документами.
+    </p>
+
+    <div class="chat-shell">
+      <!-- Sidebar -->
+      <aside class="chat-sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-user" id="current-user-label">Вы</span>
+          <button class="add-btn" title="Добавить коллегу" onclick="addUser()">+</button>
+        </div>
+
+        <div class="user-list" id="user-list">
+          <!-- Пользователи добавляются скриптом -->
+        </div>
+
+        <div class="sidebar-footer">
+          Всего пользователей: <span id="user-count">0</span>
+        </div>
+      </aside>
+
+      <!-- Main chat -->
+      <section class="chat-main">
+        <div class="chat-header">
+          <div>
+            <div>Командный чат</div>
+            <div class="chat-room-info" id="room-info">
+              Участники: маркетинг, продажи, поддержка
+            </div>
+          </div>
+          <div class="chat-room-info">
+            Режим демо · данные не сохраняются
+          </div>
+        </div>
+
+        <div id="chat-messages" class="chat-messages">
+          <!-- Сообщения добавляются скриптом -->
+        </div>
+
+        <div class="chat-input-area">
+          <div class="chat-input-row">
+            <textarea id="message-input" placeholder="Напишите сообщение…"></textarea>
+            <label class="file-input-label">
+              Прикрепить файл
+              <input id="file-input" type="file" />
+            </label>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+            <button class="btn btn-primary" onclick="sendMessage()">Отправить</button>
+            <span id="selected-file-name" class="file-name"></span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  const landingSection = document.getElementById("landing-section");
+  const authSection = document.getElementById("auth-section");
+  const chatSection = document.getElementById("chat-section");
+  const userListEl = document.getElementById("user-list");
+  const userCountEl = document.getElementById("user-count");
+  const messagesEl = document.getElementById("chat-messages");
+  const messageInput = document.getElementById("message-input");
+  const fileInput = document.getElementById("file-input");
+  const selectedFileName = document.getElementById("selected-file-name");
+  const currentUserLabel = document.getElementById("current-user-label");
+
+  let currentUser = "Вы";
+  let users = ["Андрей (маркетинг)", "Ирина (финансы)", "Отдел поддержки"];
+
+  function showSection(section) {
+    landingSection.classList.add("hidden");
+    authSection.classList.add("hidden");
+    chatSection.classList.add("hidden");
+
+    if (section === "landing") landingSection.classList.remove("hidden");
+    if (section === "auth") authSection.classList.remove("hidden");
+    if (section === "chat") chatSection.classList.remove("hidden");
+  }
+
+  function login() {
+    const name = document.getElementById("login-name").value.trim();
+    currentUser = name || "Вы";
+    currentUserLabel.textContent = currentUser;
+    showSection("chat");
+    initUsers();
+    seedDemoMessages();
+  }
+
+  function initUsers() {
+    userListEl.innerHTML = "";
+    [currentUser + " (вы)", ...users].forEach((u, index) => {
+      const item = document.createElement("div");
+      item.className = "user-item" + (index === 0 ? " active" : "");
+      item.textContent = u;
+      userListEl.appendChild(item);
+    });
+    userCountEl.textContent = users.length + 1;
+  }
+
+  function addUser() {
+    const name = prompt("Имя нового пользователя:");
+    if (!name) return;
+    users.push(name);
+    initUsers();
+  }
+
+  function seedDemoMessages() {
+    messagesEl.innerHTML = "";
+    addMessage("Андрей (маркетинг)", "Запускаем тестовый чат SENDER для команды. Просьба отправить сюда последние отчёты по проектам.");
+    addMessage(currentUser, "Принято, сейчас приложу файлы по продажам за квартал.", true);
+    addMessage("Ирина (финансы)", "Коллеги, все договоры в формате PDF тоже прошу хранить здесь.");
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function addMessage(author, text, isMe = false, fileName = "") {
+    if (!text && !fileName) return;
+    const msg = document.createElement("div");
+    msg.className = "message" + (isMe ? " me" : "");
+    const meta = document.createElement("div");
+    meta.className = "message-meta";
+    const time = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    meta.textContent = author + " • " + time;
+
+    const body = document.createElement("div");
+    body.className = "message-text";
+    body.textContent = text;
+
+    msg.appendChild(meta);
+    if (text) msg.appendChild(body);
+
+    if (fileName) {
+      const fileEl = document.createElement("div");
+      fileEl.className = "message-file";
+      fileEl.textContent = "📎 " + fileName;
+      msg.appendChild(fileEl);
+    }
+
+    messagesEl.appendChild(msg);
+  }
+
+  function sendMessage() {
+    const text = messageInput.value.trim();
+    const file = fileInput.files[0];
+    const fileName = file ? file.name : "";
+
+    if (!text && !fileName) return;
+
+    addMessage(currentUser, text, true, fileName);
+
+    messageInput.value = "";
+    fileInput.value = "";
+    selectedFileName.textContent = "";
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  fileInput.addEventListener("change", () => {
+    if (fileInput.files[0]) {
+      selectedFileName.textContent = fileInput.files[0].name;
+    } else {
+      selectedFileName.textContent = "";
+    }
+  });
+
+  // старт — лендинг
+  showSection("landing");
+</script>
+</body>
+</html>
